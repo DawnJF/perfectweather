@@ -16,7 +16,8 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        LitePal.initialize(sContext);
+        sContext = getApplicationContext();
+        LitePal.initialize(this);
     }
 
     public static Context getContext() {
