@@ -1,5 +1,6 @@
 package com.dawnjf.fei.perfectweather;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.dawnjf.fei.perfectweather.gson.Forecast;
 import com.dawnjf.fei.perfectweather.gson.Weather;
+import com.dawnjf.fei.perfectweather.service.AutoUpdateService;
 import com.dawnjf.fei.perfectweather.util.HttpUtil;
 import com.dawnjf.fei.perfectweather.util.Utility;
 
@@ -245,5 +247,8 @@ public class WeatherActivity extends AppCompatActivity {
         mCarWashText.setText(carWash);
         mSportText.setText(sport);
         mWeatherLayout.setVisibility(View.VISIBLE);
+        // 启动 后台服务（尝试）
+        MyApplication.getContext()
+                .startService(new Intent(this, AutoUpdateService.class));
     }
 }

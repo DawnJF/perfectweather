@@ -106,7 +106,6 @@ public class ChooseAreaFragment extends Fragment {
                         activity.mSwipeRefresh.setRefreshing(true);
                         activity.requestWeather(weatherId);
                     }
-
                 }
             }
         });
