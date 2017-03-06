@@ -135,28 +135,18 @@ public class WeatherActivity extends AppCompatActivity {
         // 选择了城市
         final String weatherId = getIntent().getStringExtra("weather_id");
         // 判断三种状态
-        if (showCity == null) {
-            firstOpenApp();
-        } else if (weatherId == null) {
-            Log.i(TAG, "onCreate: " + showCity);
+        if (weatherId == null) {
+            mWeatherLayout.setVisibility(View.INVISIBLE);
+            mSwipeRefresh.setRefreshing(true);
+            if (showCity == null) {
+                firstOpenApp();
+                showCity = DataSupport.where("showID = ?", "0").findFirst(MyCity.class);
+                Log.i(TAG, "onCreate: " + showCity);
+            }
             requestWeather(showCity.getWeatherId());
         } else {
-            mWeatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
         }
-//        // 选择城市后跳过解析缓存
-//        final String weatherId;
-//        if (intent_weather_id == null) {
-//            // 有缓存时直接解析天气数据
-//            Weather weather = Utility.handleWeatherResponse(weatherString);
-//            weatherId = weather.basic.weatherId;
-//            showWeatherInfo(weather);
-//        } else {
-//            // 无缓存时去服务器查询天气
-//            weatherId = intent_weather_id;
-//            mWeatherLayout.setVisibility(View.INVISIBLE);
-//            requestWeather(weatherId);
-//        }
 
 
 
