@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -12,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -21,13 +24,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.dawnjf.fei.perfectweather.db.MyCity;
 import com.dawnjf.fei.perfectweather.gson.Forecast;
 import com.dawnjf.fei.perfectweather.gson.Weather;
 import com.dawnjf.fei.perfectweather.service.AutoUpdateService;
 import com.dawnjf.fei.perfectweather.util.HttpUtil;
 import com.dawnjf.fei.perfectweather.util.Utility;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.IOException;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -35,7 +42,7 @@ import okhttp3.Response;
 
 public class WeatherActivity extends AppCompatActivity {
 
-    private static final String TAG = "WeatherActivity";
+    private static final String TAG = "WWWWW";
 
     public SwipeRefreshLayout mSwipeRefresh;
 
@@ -67,6 +74,8 @@ public class WeatherActivity extends AppCompatActivity {
 
     private ImageView mBingPicImg;
 
+    private NavigationView mNavView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,7 +104,23 @@ public class WeatherActivity extends AppCompatActivity {
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mNavButton = (Button) findViewById(R.id.nav_button);
         mSwipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
+        mNavView = (NavigationView) findViewById(R.id.nav_view);
 
+        // 设置导航栏
+        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.set_city:
+                        startActivity(new Intent(WeatherActivity.this, MainActivity.class));
+                        break;
+                    default:
+                }
+                mDrawerLayout.closeDrawers();
+                return true;
+            }
+        });
+        // 设置刷新组建
         mSwipeRefresh.setColorSchemeResources
                 (R.color.refresh_1, R.color.refresh_2,R.color.refresh_3);
         mNavButton.setOnClickListener(new View.OnClickListener() {
@@ -104,20 +129,37 @@ public class WeatherActivity extends AppCompatActivity {
                 mDrawerLayout.openDrawer(GravityCompat.START);
             }
         });
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String weatherString = prefs.getString("weather", null);
-        final String weatherId;
-        if (weatherString != null) {
-            // 有缓存时直接解析天气数据
-            Weather weather = Utility.handleWeatherResponse(weatherString);
-            weatherId = weather.basic.weatherId;
-            showWeatherInfo(weather);
+
+
+        MyCity showCity = DataSupport.where("showID = ?", "0").findFirst(MyCity.class);
+        // 选择了城市
+        final String weatherId = getIntent().getStringExtra("weather_id");
+        // 判断三种状态
+        if (showCity == null) {
+            firstOpenApp();
+        } else if (weatherId == null) {
+            Log.i(TAG, "onCreate: " + showCity);
+            requestWeather(showCity.getWeatherId());
         } else {
-            // 无缓存时去服务器查询天气
-            weatherId = getIntent().getStringExtra("weather_id");
             mWeatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
         }
+//        // 选择城市后跳过解析缓存
+//        final String weatherId;
+//        if (intent_weather_id == null) {
+//            // 有缓存时直接解析天气数据
+//            Weather weather = Utility.handleWeatherResponse(weatherString);
+//            weatherId = weather.basic.weatherId;
+//            showWeatherInfo(weather);
+//        } else {
+//            // 无缓存时去服务器查询天气
+//            weatherId = intent_weather_id;
+//            mWeatherLayout.setVisibility(View.INVISIBLE);
+//            requestWeather(weatherId);
+//        }
+
+
+
         mSwipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -125,12 +167,23 @@ public class WeatherActivity extends AppCompatActivity {
             }
         });
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String bingPic = prefs.getString("bing_pic", null);
         if (bingPic != null) {
             Glide.with(this).load(bingPic).into(mBingPicImg);
         } else {
             loadBingPic();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String weatherString = prefs.getString("weather", null);
+        if (weatherString == null) return;
+        Weather weather = Utility.handleWeatherResponse(weatherString);
+        showWeatherInfo(weather);
     }
 
     /**
@@ -214,7 +267,7 @@ public class WeatherActivity extends AppCompatActivity {
      */
     private void showWeatherInfo(Weather weather) {
         String cityName = weather.basic.cityName;
-        String updateTime = weather.basic.update.updateTime.split(" ")[1];
+        String updateTime = "更新时间:" + weather.basic.update.updateTime.split(" ")[1];
         String degree = weather.now.temperature + "℃";
         String weatherInfo = weather.now.more.info;
         mTitleCity.setText(cityName);
@@ -250,5 +303,24 @@ public class WeatherActivity extends AppCompatActivity {
         // 启动 后台服务（尝试）
         MyApplication.getContext()
                 .startService(new Intent(this, AutoUpdateService.class));
+    }
+
+    private void firstOpenApp(){
+        // 第一次打开（没有选择城市从而存入缓存）添加三个待选择城市
+        MyCity city1 = new MyCity();
+        city1.setWeatherId("CN101010100");
+        city1.setCityName("北京");
+        city1.setShowId(0);
+        city1.save();
+        MyCity city2 = new MyCity();
+        city2.setCityName("上海");
+        city2.setShowId(1);
+        city2.setWeatherId("CN101020100");
+        city2.save();
+        MyCity city3 = new MyCity();
+        city3.setCityName("广州");
+        city3.setShowId(2);
+        city3.setWeatherId("CN101280101");
+        city3.save();
     }
 }

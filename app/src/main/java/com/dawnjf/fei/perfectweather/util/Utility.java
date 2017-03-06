@@ -18,7 +18,7 @@ import org.json.JSONObject;
 
 public class Utility {
     /**
-     * 解析和处理服务器返回的省级数据
+     * 解析和处理服务器返回的省级数据并保存到数据库
      */
     public static boolean handleProvinceResponse(String response) {
         if (!TextUtils.isEmpty(response)) {
@@ -40,7 +40,7 @@ public class Utility {
     }
 
     /**
-     * 解析和处理服务器返回的市级数据
+     * 解析和处理服务器返回的市级数据并保存到数据库
      */
     public static boolean handleCityResponse(String response, int provinceId) {
         if (!TextUtils.isEmpty(response)) {
@@ -63,7 +63,7 @@ public class Utility {
     }
 
     /**
-     * 处理和解析服务器返回县级数据
+     * 处理和解析服务器返回县级数据并保存到数据库
      */
     public static boolean handleCountyResponse(String response, int cityId) {
         if (!TextUtils.isEmpty(response)) {
