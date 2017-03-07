@@ -14,6 +14,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -76,6 +78,10 @@ public class WeatherActivity extends AppCompatActivity {
 
     private NavigationView mNavView;
 
+    private Menu mMenu;
+
+    private List<MyCity> mMyCityList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,20 +112,7 @@ public class WeatherActivity extends AppCompatActivity {
         mSwipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
         mNavView = (NavigationView) findViewById(R.id.nav_view);
 
-        // 设置导航栏
-        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.set_city:
-                        startActivity(new Intent(WeatherActivity.this, MainActivity.class));
-                        break;
-                    default:
-                }
-                mDrawerLayout.closeDrawers();
-                return true;
-            }
-        });
+
         // 设置刷新组建
         mSwipeRefresh.setColorSchemeResources
                 (R.color.refresh_1, R.color.refresh_2,R.color.refresh_3);
@@ -131,24 +124,50 @@ public class WeatherActivity extends AppCompatActivity {
         });
 
 
-        MyCity showCity = DataSupport.where("showID = ?", "0").findFirst(MyCity.class);
+        updateMyCityList();
+        Log.i(TAG, "onCreate: " + mMyCityList.size());
         // 选择了城市
         final String weatherId = getIntent().getStringExtra("weather_id");
         // 判断三种状态
         if (weatherId == null) {
+            // 正常打开
             mWeatherLayout.setVisibility(View.INVISIBLE);
             mSwipeRefresh.setRefreshing(true);
-            if (showCity == null) {
+            if (mMyCityList.size() == 0) {
+                // 第一次打开
                 firstOpenApp();
-                showCity = DataSupport.where("showID = ?", "0").findFirst(MyCity.class);
-                Log.i(TAG, "onCreate: " + showCity);
+                Log.i(TAG, "onCreate: First" + mMyCityList.size());
             }
-            requestWeather(showCity.getWeatherId());
+            initNavMenu();
+            mMenu.findItem(0).setCheckable(true);
+            mMenu.findItem(0).setChecked(true);
+            requestWeather(mMyCityList.get(0).getWeatherId());
         } else {
             requestWeather(weatherId);
         }
 
-
+        // 设置导航栏
+        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.set_city:
+                        startActivity(new Intent(WeatherActivity.this, MainActivity.class));
+                        break;
+                    default:
+                }
+                for (MyCity city: mMyCityList) {
+                    if (item.getItemId() ==city.getShowId()) {
+                        MenuItem menuItem = mMenu.findItem(item.getItemId());
+                        menuItem.setCheckable(true);
+                        menuItem.setChecked(true);
+                        requestWeather(city.getWeatherId());
+                    }
+                }
+                    mDrawerLayout.closeDrawers();
+                return true;
+            }
+        });
 
         mSwipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -164,16 +183,6 @@ public class WeatherActivity extends AppCompatActivity {
         } else {
             loadBingPic();
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String weatherString = prefs.getString("weather", null);
-        if (weatherString == null) return;
-        Weather weather = Utility.handleWeatherResponse(weatherString);
-        showWeatherInfo(weather);
     }
 
     /**
@@ -295,6 +304,24 @@ public class WeatherActivity extends AppCompatActivity {
                 .startService(new Intent(this, AutoUpdateService.class));
     }
 
+    private void initNavMenu() {
+        mMenu = mNavView.getMenu();
+        List<MyCity> myCities = DataSupport.findAll(MyCity.class);
+        for (MyCity city : myCities) {
+            mMenu.add(316, city.getShowId(), 2, city.getCityName());
+            Log.i(TAG, "initNavMenu: " + city.getShowId());
+        }
+        mMenu.setGroupCheckable(316, true, true);
+    }
+
+    private void updateMyCityList() {
+        if (mMyCityList != null)
+            mMyCityList.clear();
+        mMyCityList = DataSupport.order("showId").find(MyCity.class);
+    }
+    /**
+     * 处理第一次打开APP初始化三个城市
+     */
     private void firstOpenApp(){
         // 第一次打开（没有选择城市从而存入缓存）添加三个待选择城市
         MyCity city1 = new MyCity();
@@ -312,5 +339,6 @@ public class WeatherActivity extends AppCompatActivity {
         city3.setShowId(2);
         city3.setWeatherId("CN101280101");
         city3.save();
+        updateMyCityList();
     }
 }

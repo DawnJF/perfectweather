@@ -1,35 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:visible="true">
-        <item android:title="我的城市："
-              android:icon="@drawable/ic_home"/>
+        <item
+            android:id="@+id/item_my_city"
+            android:title="我的城市："
+            android:icon="@drawable/ic_home"
+            android:orderInCategory="1"/>
 
     </group>
     <group
-        android:id="@+id/city_group"
-        android:checkableBehavior="single">
+        android:id="@+id/other_group"
+        android:visible="true">
         <item
-            android:id="@+id/city_1"
-            android:title="北京"
-            android:checked="true"
-            />
-        <item
-            android:id="@+id/city_2"
-            android:title="上海"
-            />
-        <item
-            android:id="@+id/city_3"
-            android:title="广州"
-            />
-    </group>
-    <group android:visible="true">
-        <item
+            android:orderInCategory="3"
             android:id="@+id/set_city"
             android:title="管理城市"
             android:icon="@drawable/ic_settings_white_24dp"/>
 
     </group>
     <item
+        android:orderInCategory="3"
         android:id="@+id/download_pic"
         android:icon="@drawable/ic_file_download_white_24dp"
         android:title="下载当前背景"/>
