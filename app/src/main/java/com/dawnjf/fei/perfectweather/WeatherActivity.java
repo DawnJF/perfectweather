@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -125,11 +124,12 @@ public class WeatherActivity extends AppCompatActivity {
 
 
         updateMyCityList();
-        Log.i(TAG, "onCreate: " + mMyCityList.size());
-        // 选择了城市
-        final String weatherId = getIntent().getStringExtra("weather_id");
+        Log.i(TAG, "onCreate: open" + mMyCityList.size());
+        // 添加了城市
+        MyCity addCity = (MyCity) getIntent().getSerializableExtra("my_city");
+        final String weatherId;
         // 判断三种状态
-        if (weatherId == null) {
+        if (addCity == null) {
             // 正常打开
             mWeatherLayout.setVisibility(View.INVISIBLE);
             mSwipeRefresh.setRefreshing(true);
@@ -138,20 +138,25 @@ public class WeatherActivity extends AppCompatActivity {
                 firstOpenApp();
                 Log.i(TAG, "onCreate: First" + mMyCityList.size());
             }
-            initNavMenu();
+            updateNavMenu(DataSupport.findAll(MyCity.class));
             mMenu.findItem(0).setCheckable(true);
             mMenu.findItem(0).setChecked(true);
-            requestWeather(mMyCityList.get(0).getWeatherId());
+            weatherId = mMyCityList.get(0).getWeatherId();
         } else {
-            requestWeather(weatherId);
+            weatherId = addCity.getWeatherId();
+            updateNavMenu(mMyCityList);
+            MenuItem addItem = mMenu.findItem(mMyCityList.size() - 1);
+            addItem.setCheckable(true);
+            addItem.setChecked(true);
         }
+        requestWeather(weatherId);
 
         // 设置导航栏
         mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.id.set_city:
+                    case R.id.item_add_city:
                         startActivity(new Intent(WeatherActivity.this, MainActivity.class));
                         break;
                     default:
@@ -164,7 +169,7 @@ public class WeatherActivity extends AppCompatActivity {
                         requestWeather(city.getWeatherId());
                     }
                 }
-                    mDrawerLayout.closeDrawers();
+                mDrawerLayout.closeDrawers();
                 return true;
             }
         });
@@ -281,7 +286,6 @@ public class WeatherActivity extends AppCompatActivity {
             TextView infoText = (TextView) view.findViewById(R.id.info_text);
             TextView maxText = (TextView) view.findViewById(R.id.max_text);
             TextView minText = (TextView) view.findViewById(R.id.min_text);
-            Log.i(TAG, "showWeatherInfo: " + forecast.date + "/" + forecast.temperature.max);
             dateText.setText(forecast.date);
             infoText.setText(forecast.more.info);
             maxText.setText(forecast.temperature.max);
@@ -304,21 +308,36 @@ public class WeatherActivity extends AppCompatActivity {
                 .startService(new Intent(this, AutoUpdateService.class));
     }
 
-    private void initNavMenu() {
-        mMenu = mNavView.getMenu();
-        List<MyCity> myCities = DataSupport.findAll(MyCity.class);
-        for (MyCity city : myCities) {
-            mMenu.add(316, city.getShowId(), 2, city.getCityName());
-            Log.i(TAG, "initNavMenu: " + city.getShowId());
-        }
-        mMenu.setGroupCheckable(316, true, true);
-    }
 
+    /**
+     *
+     */
     private void updateMyCityList() {
         if (mMyCityList != null)
             mMyCityList.clear();
         mMyCityList = DataSupport.order("showId").find(MyCity.class);
     }
+
+    private void updateNavMenu(List<MyCity> cities) {
+        mMenu = mNavView.getMenu();
+        for (MyCity city : cities) {
+            mMenu.add(316, city.getShowId(), 2, city.getCityName());
+        }
+        mMenu.setGroupCheckable(316, true, true);
+    }
+
+    /**
+     * 启动app初始化navMenu
+     */
+    private void initNavMenu() {
+        mMenu = mNavView.getMenu();
+        List<MyCity> myCities = DataSupport.findAll(MyCity.class);
+        for (MyCity city : myCities) {
+            mMenu.add(316, city.getShowId(), 2, city.getCityName());
+        }
+        mMenu.setGroupCheckable(316, true, true);
+    }
+
     /**
      * 处理第一次打开APP初始化三个城市
      */

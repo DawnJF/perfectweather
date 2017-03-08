@@ -13,7 +13,12 @@
         android:visible="true">
         <item
             android:orderInCategory="3"
-            android:id="@+id/set_city"
+            android:id="@+id/item_add_city"
+            android:title="添加城市"
+            android:icon="@drawable/ic_add_white_24dp"/>
+        <item
+            android:orderInCategory="3"
+            android:id="@+id/item_set_city"
             android:title="管理城市"
             android:icon="@drawable/ic_settings_white_24dp"/>
 

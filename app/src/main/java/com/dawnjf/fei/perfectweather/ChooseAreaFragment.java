@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import com.dawnjf.fei.perfectweather.db.City;
 import com.dawnjf.fei.perfectweather.db.County;
+import com.dawnjf.fei.perfectweather.db.MyCity;
 import com.dawnjf.fei.perfectweather.db.Province;
 import com.dawnjf.fei.perfectweather.util.HttpUtil;
 import com.dawnjf.fei.perfectweather.util.Utility;
@@ -36,6 +38,8 @@ import okhttp3.Response;
  */
 
 public class ChooseAreaFragment extends Fragment {
+
+    private static final String TAG = "WWWWW";
 
     public static final int LEVEL_PROVINCE = 0;
 
@@ -94,9 +98,15 @@ public class ChooseAreaFragment extends Fragment {
                     mSelectedCity = mCityList.get(i);
                     queryCounties();
                 } else if (mCurrentLevel == LEVEL_COUNTY) {
-                    String weatherId = mCountyList.get(i).getWeatherId();
+                    County city = mCountyList.get(i);
+                    MyCity myCity = new MyCity();
+                    myCity.setWeatherId(city.getWeatherId());
+                    myCity.setCityName(city.getCountyName());
+                    myCity.setShowId(DataSupport.count(MyCity.class));
+                    Log.i(TAG, "onItemClick: " + myCity.getShowId());
+                    myCity.save();
                     Intent intent = new Intent(getActivity(), WeatherActivity.class);
-                    intent.putExtra("weather_id", weatherId);
+                    intent.putExtra("my_city", myCity);
                     startActivity(intent);
                     getActivity().finish();
                 }
