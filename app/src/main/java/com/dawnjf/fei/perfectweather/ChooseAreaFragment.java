@@ -119,6 +119,8 @@ public class ChooseAreaFragment extends Fragment {
                     queryCities();
                 } else if (mCurrentLevel == LEVEL_CITY) {
                     queryProvinces();
+                } else if (mCurrentLevel == LEVEL_PROVINCE) {
+                    getActivity().finish();
                 }
             }
         });
@@ -130,7 +132,6 @@ public class ChooseAreaFragment extends Fragment {
      */
     private void queryProvinces() {
         mTitleText.setText("中国");
-        mBackButton.setVisibility(View.GONE);
         mProvinceList = DataSupport.findAll(Province.class);
         if (mProvinceList.size() > 0) {
             mDataList.clear();
@@ -151,7 +152,6 @@ public class ChooseAreaFragment extends Fragment {
      */
     private void queryCities() {
         mTitleText.setText(mSelectedProvince.getProvinceName());
-        mBackButton.setVisibility(View.VISIBLE);
         mCityList = DataSupport.
                 where("provinceId = ?", String.valueOf(mSelectedProvince.getId()))
                 .find(City.class);
@@ -175,7 +175,6 @@ public class ChooseAreaFragment extends Fragment {
      */
     private void queryCounties() {
         mTitleText.setText(mSelectedCity.getCityName());
-        mBackButton.setVisibility(View.VISIBLE);
         mCountyList = DataSupport
                 .where("cityId = ?", String.valueOf(mSelectedCity.getId()))
                 .find(County.class);
