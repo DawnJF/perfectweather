@@ -30,6 +30,7 @@ import com.dawnjf.fei.perfectweather.gson.Forecast;
 import com.dawnjf.fei.perfectweather.gson.Weather;
 import com.dawnjf.fei.perfectweather.service.AutoUpdateService;
 import com.dawnjf.fei.perfectweather.util.HttpUtil;
+import com.dawnjf.fei.perfectweather.util.MyApplication;
 import com.dawnjf.fei.perfectweather.util.Utility;
 
 import org.litepal.crud.DataSupport;
@@ -159,6 +160,10 @@ public class WeatherActivity extends AppCompatActivity {
                     case R.id.item_add_city:
                         startActivity(new Intent(WeatherActivity.this, MainActivity.class));
                         break;
+                    case R.id.item_edit_city:
+                        Intent intent = new Intent(WeatherActivity.this, EditCityActivity.class);
+                        startActivityForResult(intent, 110);
+                        break;
                     default:
                 }
                 for (MyCity city: mMyCityList) {
@@ -188,6 +193,17 @@ public class WeatherActivity extends AppCompatActivity {
         } else {
             loadBingPic();
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != 110)
+            return;
+        if (resultCode != RESULT_OK)
+            return;
+        updateMyCityList();
+        updateNavMenu(mMyCityList);
+        Log.i(TAG, "onActivityResult: " + mMyCityList.size());
     }
 
     /**
@@ -318,21 +334,14 @@ public class WeatherActivity extends AppCompatActivity {
         mMyCityList = DataSupport.order("showId").find(MyCity.class);
     }
 
+    /**
+     * 更新显示城市
+     * @param cities
+     */
     private void updateNavMenu(List<MyCity> cities) {
         mMenu = mNavView.getMenu();
+        mMenu.removeGroup(316);
         for (MyCity city : cities) {
-            mMenu.add(316, city.getShowId(), 2, city.getCityName());
-        }
-        mMenu.setGroupCheckable(316, true, true);
-    }
-
-    /**
-     * 启动app初始化navMenu
-     */
-    private void initNavMenu() {
-        mMenu = mNavView.getMenu();
-        List<MyCity> myCities = DataSupport.findAll(MyCity.class);
-        for (MyCity city : myCities) {
             mMenu.add(316, city.getShowId(), 2, city.getCityName());
         }
         mMenu.setGroupCheckable(316, true, true);

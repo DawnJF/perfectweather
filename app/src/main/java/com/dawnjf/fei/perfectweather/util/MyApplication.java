@@ -1,4 +1,4 @@
-package com.dawnjf.fei.perfectweather;
+package com.dawnjf.fei.perfectweather.util;
 
 import android.app.Application;
 import android.content.Context;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:visible="true">
         <item
             android:id="@+id/item_my_city"
@@ -18,7 +19,7 @@
             android:icon="@drawable/ic_add_white_24dp"/>
         <item
             android:orderInCategory="3"
-            android:id="@+id/item_set_city"
+            android:id="@+id/item_edit_city"
             android:title="管理城市"
             android:icon="@drawable/ic_settings_white_24dp"/>
 
