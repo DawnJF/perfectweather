@@ -342,7 +342,8 @@ public class WeatherActivity extends AppCompatActivity {
         mMenu = mNavView.getMenu();
         mMenu.removeGroup(316);
         for (MyCity city : cities) {
-            mMenu.add(316, city.getShowId(), 2, city.getCityName());
+            mMenu.add(316, city.getShowId(), 2, city.getCityName())
+                    .setIcon(R.drawable.ic_panorama_fish_eye_white_24dp);
         }
         mMenu.setGroupCheckable(316, true, true);
     }
