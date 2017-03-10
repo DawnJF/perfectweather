@@ -1,9 +1,13 @@
 package com.dawnjf.fei.perfectweather;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -12,6 +16,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,6 +36,7 @@ import com.dawnjf.fei.perfectweather.gson.Weather;
 import com.dawnjf.fei.perfectweather.service.AutoUpdateService;
 import com.dawnjf.fei.perfectweather.util.HttpUtil;
 import com.dawnjf.fei.perfectweather.util.MyApplication;
+import com.dawnjf.fei.perfectweather.util.NotificationUtil;
 import com.dawnjf.fei.perfectweather.util.Utility;
 
 import org.litepal.crud.DataSupport;
@@ -47,40 +53,24 @@ public class WeatherActivity extends AppCompatActivity {
     private static final String TAG = "WWWWW";
 
     public SwipeRefreshLayout mSwipeRefresh;
-
     public DrawerLayout mDrawerLayout;
-
     private Button mNavButton;
-
     private ScrollView mWeatherLayout;
-
     private TextView mTitleCity;
-
     private TextView mTitleUpdateTime;
-
     private TextView mDegreeText;
-
     private TextView mWeatherInfoText;
-
     private LinearLayout mForecastLayout;
-
     private TextView mAQIText;
-
     private TextView mPM25Text;
-
     private TextView mComfortText;
-
     private TextView mCarWashText;
-
     private TextView mSportText;
-
     private ImageView mBingPicImg;
-
     private NavigationView mNavView;
-
     private Menu mMenu;
-
     private List<MyCity> mMyCityList;
+    private String mPicUrl = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -164,6 +154,8 @@ public class WeatherActivity extends AppCompatActivity {
                         Intent intent = new Intent(WeatherActivity.this, EditCityActivity.class);
                         startActivityForResult(intent, 110);
                         break;
+                    case R.id.download_pic:
+                        downloadPic();
                     default:
                 }
                 for (MyCity city: mMyCityList) {
@@ -187,9 +179,9 @@ public class WeatherActivity extends AppCompatActivity {
         });
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String bingPic = prefs.getString("bing_pic", null);
-        if (bingPic != null) {
-            Glide.with(this).load(bingPic).into(mBingPicImg);
+        mPicUrl = prefs.getString("bing_pic", null);
+        if (mPicUrl != null) {
+            Glide.with(this).load(mPicUrl).into(mBingPicImg);
         } else {
             loadBingPic();
         }
@@ -267,6 +259,7 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String bingPic = response.body().string();
+                mPicUrl = bingPic;
                 SharedPreferences.Editor editor = PreferenceManager
                         .getDefaultSharedPreferences(WeatherActivity.this).edit();
                 editor.putString("bing_pic", bingPic);
@@ -369,5 +362,50 @@ public class WeatherActivity extends AppCompatActivity {
         city3.setWeatherId("CN101280101");
         city3.save();
         updateMyCityList();
+    }
+
+    private void downloadPic() {
+        if (mPicUrl == null) {
+            Toast.makeText(this, "稍等图片加载出来", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        Notification notification = NotificationUtil.getNotification(this, "正在下载...", 0);
+        manager.notify(1, notification);
+        Toast.makeText(this, "开始下载", Toast.LENGTH_SHORT).show();
+
+        DownloadPicTask task = new DownloadPicTask(new DownLoadPicListener() {
+            @Override
+            public void showProgress(int progress) {
+                Notification notification = NotificationUtil
+                        .getNotification(WeatherActivity.this, "正在下载...", progress);
+                manager.notify(1, notification);
+            }
+
+            @Override
+            public void onSuccess() {
+                String fileName = mPicUrl.substring(mPicUrl.lastIndexOf("/"));
+                String directory = Environment.getExternalStoragePublicDirectory
+                        (Environment.DIRECTORY_DOWNLOADS).getPath();
+                manager.notify(1, NotificationUtil.getSuccessNotification
+                        (WeatherActivity.this, Uri.parse(directory + fileName)));
+                Toast.makeText(WeatherActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailed() {
+                manager.cancel(1);
+                Toast.makeText(WeatherActivity.this, "下载失败", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void exists() {
+                manager.cancel(1);
+                Toast.makeText(WeatherActivity.this, "已经存在", Toast.LENGTH_SHORT).show();
+            }
+        });
+        task.execute(mPicUrl);
     }
 }

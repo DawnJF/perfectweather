@@ -3,6 +3,8 @@
           package="com.dawnjf.fei.perfectweather">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:name=".util.MyApplication"
@@ -31,6 +33,7 @@
             android:name=".EditCityActivity"
             android:theme="@style/AppTheme">
         </activity>
+
     </application>
 
 </manifest>

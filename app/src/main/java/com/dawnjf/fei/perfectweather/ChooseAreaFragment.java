@@ -42,33 +42,20 @@ public class ChooseAreaFragment extends Fragment {
     private static final String TAG = "WWWWW";
 
     public static final int LEVEL_PROVINCE = 0;
-
     public static final int LEVEL_CITY = 1;
-
     public static final int LEVEL_COUNTY = 2;
 
     private ProgressDialog mProgressDialog;
-
     private TextView mTitleText;
-
     private Button mBackButton;
-
     private ListView mListView;
-
     private ArrayAdapter<String> mAdapter;
-
     private List<String> mDataList = new ArrayList<>();
-
     private List<Province> mProvinceList;
-
     private List<City> mCityList;
-
     private List<County> mCountyList;
-
     private Province mSelectedProvince;
-
     private City mSelectedCity;
-
     private int mCurrentLevel;
 
     @Nullable
