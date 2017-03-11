@@ -8,6 +8,8 @@ public interface DownLoadPicListener {
 
     void showProgress(int progress);
 
+    void onStart();
+
     void onSuccess();
 
     void onFailed();

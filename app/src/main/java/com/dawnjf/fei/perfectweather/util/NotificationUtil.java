@@ -23,14 +23,14 @@ public class NotificationUtil {
                 (context.getResources(), R.mipmap.ic_launcher));
         builder.setContentTitle(title);
         builder.setContentText(progress + "%");
-        builder.setProgress(100, progress, false);
+        builder.setProgress(50, progress, false);
         return builder.build();
     }
 
     public static Notification getSuccessNotification(Context context, Uri uri) {
         Intent intent = new Intent("android.intent.action.VIEW");
 //        intent.addCategory("android.intent.category.DEFAULT");
-//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setDataAndType(uri, "image/*");
         PendingIntent pi = PendingIntent.getActivity(context, 0, intent, 0);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
@@ -40,6 +40,7 @@ public class NotificationUtil {
         builder.setContentTitle("下载完成");
         builder.setWhen(System.currentTimeMillis());
         builder.setContentIntent(pi);
+        builder.setAutoCancel(true);
         return builder.build();
     }
 }

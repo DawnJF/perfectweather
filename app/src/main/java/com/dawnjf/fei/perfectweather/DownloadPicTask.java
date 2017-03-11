@@ -2,7 +2,6 @@ package com.dawnjf.fei.perfectweather;
 
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +29,11 @@ public class DownloadPicTask extends AsyncTask<String, Integer, Integer>{
         mListener = listener;
     }
 
-    // 任务
+    @Override
+    protected void onPreExecute() {
+        mListener.onStart();
+    }
+
     @Override
     protected Integer doInBackground(String... params) {
         InputStream inputStream = null;
@@ -40,10 +43,9 @@ public class DownloadPicTask extends AsyncTask<String, Integer, Integer>{
         try {
             long downloadLength = 0;
             String url = params[0];
-            Log.i(TAG, "doInBackground: " + url);
             String fileName = url.substring(url.lastIndexOf("/"));
             String directory = Environment.getExternalStoragePublicDirectory
-                    (Environment.DIRECTORY_DOWNLOADS).getPath();
+                    (Environment.DIRECTORY_PICTURES).getPath();
             // 存在判断，记录已经下载长度
             file = new File(directory + fileName);
             if (file.exists()) {
@@ -73,9 +75,12 @@ public class DownloadPicTask extends AsyncTask<String, Integer, Integer>{
             while ((len = inputStream.read(b)) != -1) {
                 total += len;
                 savedFile.write(b, 0, len);
-                int progress = (int) ((total + downloadLength)
-                        / contentLength * 100);
+                int progress = (int)
+                        ((total + downloadLength) * 50 / contentLength);
                 publishProgress(progress);
+            }
+            if (total + downloadLength == contentLength) {
+                return TYPE_SUCCESS;
             }
         } catch(IOException e) {
             e.printStackTrace();
@@ -89,7 +94,7 @@ public class DownloadPicTask extends AsyncTask<String, Integer, Integer>{
                 e.printStackTrace();
             }
         }
-        return TYPE_SUCCESS;
+        return TYPE_FAILED;
     }
 
     // 进度更新

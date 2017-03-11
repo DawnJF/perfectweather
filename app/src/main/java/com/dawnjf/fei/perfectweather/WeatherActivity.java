@@ -1,9 +1,11 @@
 package com.dawnjf.fei.perfectweather;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -11,6 +13,8 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -41,6 +45,7 @@ import com.dawnjf.fei.perfectweather.util.Utility;
 
 import org.litepal.crud.DataSupport;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -155,7 +160,7 @@ public class WeatherActivity extends AppCompatActivity {
                         startActivityForResult(intent, 110);
                         break;
                     case R.id.download_pic:
-                        downloadPic();
+                        downloadPermission();
                     default:
                 }
                 for (MyCity city: mMyCityList) {
@@ -196,6 +201,22 @@ public class WeatherActivity extends AppCompatActivity {
         updateMyCityList();
         updateNavMenu(mMyCityList);
         Log.i(TAG, "onActivityResult: " + mMyCityList.size());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 1:
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    downloadPic();
+                } else {
+                    Toast.makeText(this, "无法下载", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+        }
     }
 
     /**
@@ -371,12 +392,18 @@ public class WeatherActivity extends AppCompatActivity {
         }
 
         final NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        Notification notification = NotificationUtil.getNotification(this, "正在下载...", 0);
-        manager.notify(1, notification);
-        Toast.makeText(this, "开始下载", Toast.LENGTH_SHORT).show();
+        final String fileName = mPicUrl.substring(mPicUrl.lastIndexOf("/"));
+        final String directory = Environment.getExternalStoragePublicDirectory
+                (Environment.DIRECTORY_PICTURES).getPath();
 
         DownloadPicTask task = new DownloadPicTask(new DownLoadPicListener() {
+
+            @Override
+            public void onStart() {
+                Toast.makeText(WeatherActivity.this, "准备开始下载...", Toast.LENGTH_SHORT).show();
+                manager.notify(1, NotificationUtil.getNotification(WeatherActivity.this, "正在下载...", 0));
+            }
+
             @Override
             public void showProgress(int progress) {
                 Notification notification = NotificationUtil
@@ -386,11 +413,13 @@ public class WeatherActivity extends AppCompatActivity {
 
             @Override
             public void onSuccess() {
-                String fileName = mPicUrl.substring(mPicUrl.lastIndexOf("/"));
-                String directory = Environment.getExternalStoragePublicDirectory
-                        (Environment.DIRECTORY_DOWNLOADS).getPath();
+                File file = new File(directory + fileName);
+                Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                intent.setData(Uri.fromFile(file));
+                sendBroadcast(intent);
+
                 manager.notify(1, NotificationUtil.getSuccessNotification
-                        (WeatherActivity.this, Uri.parse(directory + fileName)));
+                        (WeatherActivity.this, Uri.fromFile(file)));
                 Toast.makeText(WeatherActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
             }
 
@@ -407,5 +436,16 @@ public class WeatherActivity extends AppCompatActivity {
             }
         });
         task.execute(mPicUrl);
+    }
+
+    private void downloadPermission() {
+        if (ContextCompat.checkSelfPermission
+                (WeatherActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(WeatherActivity.this,
+                    new String [] {Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        } else {
+            downloadPic();
+        }
     }
 }
